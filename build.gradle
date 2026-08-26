@@ -19,6 +19,9 @@ repositories {
 def lombokVersion = '1.18.38'
 
 dependencies {
+	//spring-web
+	implementation 'org.springframework:spring-web:6.2.19'
+
 	// Lombok
 	compileOnly "org.projectlombok:lombok:$lombokVersion"
 	annotationProcessor "org.projectlombok:lombok:$lombokVersion"
@@ -29,6 +32,7 @@ dependencies {
 	// Test
 	testImplementation platform('org.junit:junit-bom:5.13.4')
 	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testImplementation 'org.assertj:assertj-core'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
