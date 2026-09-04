@@ -1,6 +1,5 @@
 package com.hia.common.response;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
 import java.time.LocalDateTime;
@@ -12,13 +11,15 @@ public record ErrorResponse(
         String field,
         LocalDateTime timestamp
 ) {
+
     public static ErrorResponse of(
             HttpStatusCode status,
+            String code,
             Object message
     ){
         return new ErrorResponse(
                 status.value(),
-                HttpStatus.valueOf(status.value()).name(),
+                code,
                 message,
                 null,
                 LocalDateTime.now()
@@ -27,12 +28,13 @@ public record ErrorResponse(
 
     public static ErrorResponse of(
             HttpStatusCode status,
+            String code,
             String field,
             Object message
     ){
         return new ErrorResponse(
                 status.value(),
-                HttpStatus.valueOf(status.value()).name(),
+                code,
                 message,
                 field,
                 LocalDateTime.now()
