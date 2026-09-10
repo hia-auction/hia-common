@@ -1,0 +1,151 @@
+package com.hia.common.exception;
+
+import com.hia.common.response.ErrorResponse;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+
+import java.util.Map;
+
+public class GlobalExceptionHandlerTest {
+
+    private enum TestErrorCode implements ErrorCode{
+
+        TEST_NOT_FOUND(
+                HttpStatus.NOT_FOUND,
+                "TEST_NOT_FOUND",
+                "테스트 리소스를 찾을 수 없습니다."
+        );
+
+        private final HttpStatus status;
+        private final String code;
+        private final String message;
+
+        TestErrorCode(HttpStatus status, String code, String message){
+            this.status = status;
+            this.code = code;
+            this.message = message;
+        }
+
+        @Override
+        public HttpStatus getStatus() {
+            return status;
+        }
+
+        @Override
+        public String getCode() {
+            return code;
+        }
+
+        @Override
+        public String getMessage() {
+            return message;
+        }
+    }
+
+    @Test
+    void CustomException_Handler사용하여_ErrorResponse로_변환(){
+        //given 준비
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        CustomException exception = new CustomException(TestErrorCode.TEST_NOT_FOUND);
+
+        //when 상황 또는 행동
+        ResponseEntity<ErrorResponse> response =
+                handler.handleCustomException(exception);
+
+        //then 결과 검증
+        Assertions.assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+
+        Assertions.assertEquals(404, response.getBody().status());
+
+        Assertions.assertEquals("TEST_NOT_FOUND", response.getBody().error());
+
+        Assertions.assertEquals("테스트 리소스를 찾을 수 없습니다." , response.getBody().message());
+    }
+
+    @Test
+    void 예상치_못한_Exception_Handler를_사용하여_ErrorResponse_변환(){
+
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        Exception exception = new RuntimeException("가상의 내부 오류");
+
+        ResponseEntity<ErrorResponse> response = handler.handleException(exception);
+
+        Assertions.assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+
+        Assertions.assertNotNull(response.getBody());
+
+        Assertions.assertEquals(500, response.getBody().status());
+
+        Assertions.assertEquals("INTERNAL_SERVER_ERROR", response.getBody().error());
+
+        Assertions.assertEquals("서버 내부 오류가 발생했습니다.", response.getBody().message());
+    }
+
+    @Test
+    void ValidationException을_ErrorResponse로_반환(){
+
+        Object target = new Object();
+
+        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(target, "testRequest");
+
+        bindingResult.addError(
+                new FieldError(
+                        "testRequest",
+                        "email",
+                        "이메일 형식이 올바르지 않습니다."
+                )
+        );
+
+        bindingResult.addError(
+                new FieldError(
+                        "testRequest",
+                        "password",
+                        "비밀번호는 필수입니다."
+                )
+        );
+
+        MethodArgumentNotValidException exception =
+                new MethodArgumentNotValidException(null, bindingResult);
+
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        ResponseEntity<ErrorResponse> response = handler.handleMethodArgumentNotValidException(exception);
+
+        Assertions.assertEquals(
+                HttpStatus.BAD_REQUEST,
+                response.getStatusCode()
+        );
+
+        Assertions.assertNotNull(response.getBody());
+
+        Assertions.assertEquals(
+                400,
+                response.getBody().status()
+        );
+
+        Assertions.assertEquals(
+                "VALIDATION_ERROR",
+                response.getBody().error()
+        );
+
+        Map<String, String> errors =
+                (Map<String, String>) response.getBody().message();
+
+        Assertions.assertEquals(
+                "이메일 형식이 올바르지 않습니다.",
+                errors.get("email")
+        );
+
+        Assertions.assertEquals(
+                "비밀번호는 필수입니다.",
+                errors.get("password")
+        );
+    }
+}

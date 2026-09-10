@@ -17,14 +17,18 @@ repositories {
 }
 
 def lombokVersion = '1.18.38'
+def springVersion = '6.2.19'
 
 dependencies {
 	//spring-web
-	implementation 'org.springframework:spring-web:6.2.19'
+	api "org.springframework:spring-web:$springVersion"
+	implementation "org.springframework:spring-context:$springVersion"
 
 	// Lombok
 	compileOnly "org.projectlombok:lombok:$lombokVersion"
 	annotationProcessor "org.projectlombok:lombok:$lombokVersion"
+
+	implementation 'org.slf4j:slf4j-api:2.0.17'
 
 	testCompileOnly "org.projectlombok:lombok:$lombokVersion"
 	testAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
