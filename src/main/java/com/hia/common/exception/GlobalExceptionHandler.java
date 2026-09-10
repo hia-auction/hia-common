@@ -1,6 +1,8 @@
 package com.hia.common.exception;
 
 import com.hia.common.response.ErrorResponse;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -67,6 +69,31 @@ public class GlobalExceptionHandler {
                         fieldError -> fieldError.getDefaultMessage() != null
                                 ? fieldError.getDefaultMessage()
                                 : "Invalid value",
+                        (existing, replacement) -> existing
+                ));
+
+        ErrorResponse response = ErrorResponse.of(
+                HttpStatus.BAD_REQUEST,
+                "VALIDATION_ERROR",
+                errors
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(
+            ConstraintViolationException exception
+    ){
+        log.warn("Constraint validation failed. errorCount={}",
+                exception.getConstraintViolations().size());
+
+        Map<String, String> errors = exception.getConstraintViolations()
+                .stream()
+                .collect(Collectors.toMap(
+                        violation -> violation.getPropertyPath().toString(),
+                        ConstraintViolation::getMessage,
                         (existing, replacement) -> existing
                 ));
 

@@ -1,8 +1,12 @@
 package com.hia.common.exception;
 
 import com.hia.common.response.ErrorResponse;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Path;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BeanPropertyBindingResult;
@@ -10,6 +14,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.Map;
+import java.util.Set;
 
 public class GlobalExceptionHandlerTest {
 
@@ -146,6 +151,50 @@ public class GlobalExceptionHandlerTest {
         Assertions.assertEquals(
                 "비밀번호는 필수입니다.",
                 errors.get("password")
+        );
+    }
+
+    @Test
+    void ConstraintViolationException을_ErrorResponse로_반환(){
+
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        ConstraintViolation<?> violation = Mockito.mock(ConstraintViolation.class);
+
+        Path propertyPath = Mockito.mock(Path.class);
+
+        Mockito.when(propertyPath.toString())
+                .thenReturn("getUser.id");
+
+        Mockito.when(violation.getPropertyPath())
+                .thenReturn(propertyPath);
+
+        Mockito.when(violation.getMessage())
+                .thenReturn("0보다 커야 합니다.");
+
+        ConstraintViolationException exception = new ConstraintViolationException(Set.of(violation));
+
+        ResponseEntity<ErrorResponse> response = handler.handleConstraintViolationException(exception);
+
+        // then
+        Assertions.assertEquals(
+                HttpStatus.BAD_REQUEST,
+                response.getStatusCode()
+        );
+
+        Assertions.assertNotNull(response.getBody());
+
+        Assertions.assertEquals(
+                "VALIDATION_ERROR",
+                response.getBody().error()
+        );
+
+        Map<String, String> errors =
+                (Map<String, String>) response.getBody().message();
+
+        Assertions.assertEquals(
+                "0보다 커야 합니다.",
+                errors.get("getUser.id")
         );
     }
 }
