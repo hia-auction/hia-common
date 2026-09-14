@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -195,6 +196,40 @@ public class GlobalExceptionHandlerTest {
         Assertions.assertEquals(
                 "0보다 커야 합니다.",
                 errors.get("getUser.id")
+        );
+    }
+
+    @Test
+    void HttpMessageNotReadableException을_ErrorResponse로_반환(){
+
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        HttpMessageNotReadableException exception =
+                new HttpMessageNotReadableException("가상의 요청 본문 파싱 오류");
+
+        ResponseEntity<ErrorResponse> response =
+                handler.handleHttpMessageNotReadableException(exception);
+
+        Assertions.assertEquals(
+                HttpStatus.BAD_REQUEST,
+                response.getStatusCode()
+        );
+
+        Assertions.assertNotNull(response.getBody());
+
+        Assertions.assertEquals(
+                400,
+                response.getBody().status()
+        );
+
+        Assertions.assertEquals(
+                "INVALID_REQUEST_BODY",
+                response.getBody().error()
+        );
+
+        Assertions.assertEquals(
+                "요청 본문의 형식이 올바르지 않습니다.",
+                response.getBody().message()
         );
     }
 }
