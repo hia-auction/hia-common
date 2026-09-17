@@ -81,7 +81,7 @@ public class GlobalExceptionHandlerTest {
 
         Exception exception = new RuntimeException("가상의 내부 오류");
 
-        ResponseEntity<ErrorResponse> response = handler.handleException(exception);
+        ResponseEntity<ErrorResponse> response = handler.handleUnexpectedException(exception);
 
         Assertions.assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
 
@@ -95,7 +95,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void ValidationException을_ErrorResponse로_반환(){
+    void MethodArgumentNotValidException을_ErrorResponse로_변환(){
 
         Object target = new Object();
 
@@ -184,6 +184,11 @@ public class GlobalExceptionHandlerTest {
         );
 
         Assertions.assertNotNull(response.getBody());
+
+        Assertions.assertEquals(
+                400,
+                response.getBody().status()
+        );
 
         Assertions.assertEquals(
                 "VALIDATION_ERROR",

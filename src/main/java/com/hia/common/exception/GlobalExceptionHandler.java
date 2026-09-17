@@ -4,7 +4,6 @@ import com.hia.common.response.ErrorResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -40,21 +39,6 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception exception){
-
-        log.error("Unhandled exception occurred", exception);
-
-        ErrorResponse response = ErrorResponse.of(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "INTERNAL_SERVER_ERROR",
-                "서버 내부 오류가 발생했습니다."
-        );
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(response);
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(
             MethodArgumentNotValidException exception
@@ -69,17 +53,19 @@ public class GlobalExceptionHandler {
                         FieldError::getField,
                         fieldError -> fieldError.getDefaultMessage() != null
                                 ? fieldError.getDefaultMessage()
-                                : "Invalid value",
+                                : "올바르지 않은 값입니다.",
                         (existing, replacement) -> existing
                 ));
 
+        ErrorCode errorCode = CommonErrorCode.VALIDATION_ERROR;
+
         ErrorResponse response = ErrorResponse.of(
-                HttpStatus.BAD_REQUEST,
-                "VALIDATION_ERROR",
+                errorCode.getStatus(),
+                errorCode.getCode(),
                 errors
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(errorCode.getStatus())
                 .body(response);
     }
 
@@ -98,13 +84,15 @@ public class GlobalExceptionHandler {
                         (existing, replacement) -> existing
                 ));
 
+        ErrorCode errorCode = CommonErrorCode.VALIDATION_ERROR;
+
         ErrorResponse response = ErrorResponse.of(
-                HttpStatus.BAD_REQUEST,
-                "VALIDATION_ERROR",
+                errorCode.getStatus(),
+                errorCode.getCode(),
                 errors
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(errorCode.getStatus())
                 .body(response);
     }
 
@@ -112,18 +100,44 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
             HttpMessageNotReadableException exception
     ){
+        Throwable cause = exception.getMostSpecificCause();
+
         log.warn(
-                "Invalid request body. cause={}",
-                exception.getMostSpecificCause().getMessage()
+                "Invalid request body. causeType={}, cause={}",
+                cause != null
+                        ? cause.getClass().getSimpleName()
+                        : exception.getClass().getSimpleName(),
+                cause != null
+                        ? cause.getMessage()
+                        : exception.getMessage()
         );
+
+        ErrorCode errorCode = CommonErrorCode.INVALID_REQUEST_BODY;
 
         ErrorResponse response = ErrorResponse.of(
-                HttpStatus.BAD_REQUEST,
-                "INVALID_REQUEST_BODY",
-                "요청 본문의 형식이 올바르지 않습니다."
+                errorCode.getStatus(),
+                errorCode.getCode(),
+                errorCode.getMessage()
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(response);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleUnexpectedException(Exception exception){
+
+        log.error("Unhandled exception occurred", exception);
+
+        ErrorCode errorCode = CommonErrorCode.INTERNAL_SERVER_ERROR;
+
+        ErrorResponse response = ErrorResponse.of(
+                errorCode.getStatus(),
+                errorCode.getCode(),
+                errorCode.getMessage()
+        );
+
+        return ResponseEntity.status(errorCode.getStatus())
                 .body(response);
     }
 }
