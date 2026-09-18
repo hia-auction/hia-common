@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -309,6 +310,39 @@ public class GlobalExceptionHandlerTest {
 
         Assertions.assertEquals(
                 "필수 요청 파라미터가 누락되었습니다.",
+                response.getBody().message()
+        );
+    }
+
+    @Test
+    void HttpRequestMethodNotSupportedException을_ErrorResponse로_반환(){
+
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        HttpRequestMethodNotSupportedException exception = new HttpRequestMethodNotSupportedException("POST");
+
+        ResponseEntity<ErrorResponse> response =
+                handler.handleHttpRequestMethodNotSupportedException(exception);
+
+        Assertions.assertEquals(
+                HttpStatus.METHOD_NOT_ALLOWED,
+                response.getStatusCode()
+        );
+
+        Assertions.assertNotNull(response.getBody());
+
+        Assertions.assertEquals(
+                405,
+                response.getBody().status()
+        );
+
+        Assertions.assertEquals(
+                "METHOD_NOT_ALLOWED",
+                response.getBody().error()
+        );
+
+        Assertions.assertEquals(
+                "지원하지 않는 HTTP 메서드입니다.",
                 response.getBody().message()
         );
     }

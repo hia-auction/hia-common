@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -161,6 +162,28 @@ public class GlobalExceptionHandler {
         );
 
         ErrorCode errorCode = CommonErrorCode.INVALID_REQUEST_BODY;
+
+        ErrorResponse response = ErrorResponse.of(
+                errorCode.getStatus(),
+                errorCode.getCode(),
+                errorCode.getMessage()
+        );
+
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(response);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(
+            HttpRequestMethodNotSupportedException exception
+    ){
+        log.warn(
+                "HTTP method not supported. method={}, supportedMethods={}",
+                exception.getMethod(),
+                exception.getSupportedHttpMethods()
+                );
+
+        ErrorCode errorCode = CommonErrorCode.METHOD_NOT_ALLOWED;
 
         ErrorResponse response = ErrorResponse.of(
                 errorCode.getStatus(),
