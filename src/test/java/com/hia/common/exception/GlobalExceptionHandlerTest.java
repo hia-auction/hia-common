@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -17,6 +18,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Map;
 import java.util.Set;
@@ -343,6 +345,38 @@ public class GlobalExceptionHandlerTest {
 
         Assertions.assertEquals(
                 "지원하지 않는 HTTP 메서드입니다.",
+                response.getBody().message()
+        );
+    }
+
+    @Test
+    void NoResourceFoundException을_ErrorResponse로_반환(){
+
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        NoResourceFoundException exception = new NoResourceFoundException(HttpMethod.POST, "/users/999");
+
+        ResponseEntity<ErrorResponse> response = handler.handleNoResourceFoundException(exception);
+
+        Assertions.assertEquals(
+                HttpStatus.NOT_FOUND,
+                response.getStatusCode()
+        );
+
+        Assertions.assertNotNull(response.getBody());
+
+        Assertions.assertEquals(
+                404,
+                response.getBody().status()
+        );
+
+        Assertions.assertEquals(
+                "RESOURCE_NOT_FOUND",
+                response.getBody().error()
+        );
+
+        Assertions.assertEquals(
+                "요청한 리소스를 찾을 수 없습니다.",
                 response.getBody().message()
         );
     }

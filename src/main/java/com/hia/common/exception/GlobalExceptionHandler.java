@@ -13,6 +13,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -162,6 +163,28 @@ public class GlobalExceptionHandler {
         );
 
         ErrorCode errorCode = CommonErrorCode.INVALID_REQUEST_BODY;
+
+        ErrorResponse response = ErrorResponse.of(
+                errorCode.getStatus(),
+                errorCode.getCode(),
+                errorCode.getMessage()
+        );
+
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(response);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFoundException(
+            NoResourceFoundException exception
+    ){
+        log.warn(
+                "Resource not found. method={}, resource={}",
+                exception.getHttpMethod(),
+                exception.getResourcePath()
+        );
+
+        ErrorCode errorCode = CommonErrorCode.RESOURCE_NOT_FOUND;
 
         ErrorResponse response = ErrorResponse.of(
                 errorCode.getStatus(),
