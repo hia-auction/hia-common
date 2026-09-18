@@ -14,6 +14,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Map;
@@ -276,6 +277,38 @@ public class GlobalExceptionHandlerTest {
 
         Assertions.assertEquals(
                 "요청 파라미터의 형식이 올바르지 않습니다.",
+                response.getBody().message()
+        );
+    }
+
+    @Test
+    void MissingServletRequestParameterException을_ErrorResponse로_반환(){
+
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        MissingServletRequestParameterException exception = new MissingServletRequestParameterException("id", "Long");
+
+        ResponseEntity<ErrorResponse> response = handler.handleMissingServletRequestParameterException(exception);
+
+        Assertions.assertEquals(
+                HttpStatus.BAD_REQUEST,
+                response.getStatusCode()
+        );
+
+        Assertions.assertNotNull(response.getBody());
+
+        Assertions.assertEquals(
+                400,
+                response.getBody().status()
+        );
+
+        Assertions.assertEquals(
+                "MISSING_REQUEST_PARAMETER",
+                response.getBody().error()
+        );
+
+        Assertions.assertEquals(
+                "필수 요청 파라미터가 누락되었습니다.",
                 response.getBody().message()
         );
     }

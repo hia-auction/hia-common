@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -110,6 +111,28 @@ public class GlobalExceptionHandler {
         );
 
         ErrorCode errorCode = CommonErrorCode.INVALID_PARAMETER_TYPE;
+
+        ErrorResponse response = ErrorResponse.of(
+                errorCode.getStatus(),
+                errorCode.getCode(),
+                errorCode.getMessage()
+        );
+
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(response);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingServletRequestParameterException(
+            MissingServletRequestParameterException exception
+    ){
+        log.warn(
+                "Missing request parameter. name={}, type={}",
+                exception.getParameterName(),
+                exception.getParameterType()
+        );
+
+        ErrorCode errorCode = CommonErrorCode.MISSING_REQUEST_PARAMETER;
 
         ErrorResponse response = ErrorResponse.of(
                 errorCode.getStatus(),

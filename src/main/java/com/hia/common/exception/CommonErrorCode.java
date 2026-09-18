@@ -22,6 +22,12 @@ public enum CommonErrorCode implements ErrorCode{
             "요청 파라미터의 형식이 올바르지 않습니다."
     ),
 
+    MISSING_REQUEST_PARAMETER(
+            HttpStatus.BAD_REQUEST,
+            "MISSING_REQUEST_PARAMETER",
+            "필수 요청 파라미터가 누락되었습니다."
+    ),
+
     INTERNAL_SERVER_ERROR(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "INTERNAL_SERVER_ERROR",
