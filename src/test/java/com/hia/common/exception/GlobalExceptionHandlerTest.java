@@ -7,12 +7,14 @@ import jakarta.validation.Path;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Map;
 import java.util.Set;
@@ -234,6 +236,46 @@ public class GlobalExceptionHandlerTest {
 
         Assertions.assertEquals(
                 "요청 본문의 형식이 올바르지 않습니다.",
+                response.getBody().message()
+        );
+    }
+
+    @Test
+    void MethodArgumentTypeMismatchException을_ErrorResponse로_반환(){
+
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        MethodParameter methodParameter = Mockito.mock(MethodParameter.class);
+
+        MethodArgumentTypeMismatchException exception = new MethodArgumentTypeMismatchException(
+                "abc",
+                Long.class,
+                "id",
+                methodParameter,
+                new IllegalArgumentException("타입 변환 실패")
+        );
+
+        ResponseEntity<ErrorResponse> response = handler.handleMethodArgumentTypeMismatchException(exception);
+
+        Assertions.assertEquals(
+                HttpStatus.BAD_REQUEST,
+                response.getStatusCode()
+        );
+
+        Assertions.assertNotNull(response.getBody());
+
+        Assertions.assertEquals(
+                400,
+                response.getBody().status()
+        );
+
+        Assertions.assertEquals(
+                "INVALID_PARAMETER_TYPE",
+                response.getBody().error()
+        );
+
+        Assertions.assertEquals(
+                "요청 파라미터의 형식이 올바르지 않습니다.",
                 response.getBody().message()
         );
     }

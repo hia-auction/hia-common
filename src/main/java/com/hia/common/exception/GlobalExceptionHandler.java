@@ -10,6 +10,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -90,6 +91,30 @@ public class GlobalExceptionHandler {
                 errorCode.getStatus(),
                 errorCode.getCode(),
                 errors
+        );
+
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException exception
+    ){
+        log.warn(
+                "Parameter type mismatch. name={}, requiredType={}",
+                exception.getName(),
+                exception.getRequiredType() != null
+                        ? exception.getRequiredType().getSimpleName()
+                        : "unknown"
+        );
+
+        ErrorCode errorCode = CommonErrorCode.INVALID_PARAMETER_TYPE;
+
+        ErrorResponse response = ErrorResponse.of(
+                errorCode.getStatus(),
+                errorCode.getCode(),
+                errorCode.getMessage()
         );
 
         return ResponseEntity.status(errorCode.getStatus())

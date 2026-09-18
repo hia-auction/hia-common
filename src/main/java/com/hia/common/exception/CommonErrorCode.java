@@ -16,6 +16,12 @@ public enum CommonErrorCode implements ErrorCode{
             "요청 본문의 형식이 올바르지 않습니다."
     ),
 
+    INVALID_PARAMETER_TYPE(
+            HttpStatus.BAD_REQUEST,
+            "INVALID_PARAMETER_TYPE",
+            "요청 파라미터의 형식이 올바르지 않습니다."
+    ),
+
     INTERNAL_SERVER_ERROR(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "INTERNAL_SERVER_ERROR",
