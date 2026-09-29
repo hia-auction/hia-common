@@ -16,6 +16,25 @@ publishing {
 	publications {
 		mavenJava(MavenPublication) {
 			from components.java
+
+			pom {
+				name = 'HIA Common Library'
+				description = 'MSA 공통 라이브러리'
+			}
+		}
+	}
+
+	repositories {
+		maven {
+			name = 'GitHubPackages'
+			url = uri(
+					'https://maven.pkg.github.com/sionkim0126/hia-common'
+			)
+
+			credentials {
+				username = System.getenv('GITHUB_ACTOR')
+				password = System.getenv('GITHUB_TOKEN')
+			}
 		}
 	}
 }
