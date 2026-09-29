@@ -28,7 +28,7 @@ publishing {
 		maven {
 			name = 'GitHubPackages'
 			url = uri(
-					'https://maven.pkg.github.com/sionkim0126/hia-common'
+					'https://maven.pkg.github.com/hia-auction/hia-common'
 			)
 
 			credentials {
