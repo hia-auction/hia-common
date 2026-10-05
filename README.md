@@ -127,11 +127,11 @@ throw new CustomException(UserErrorCode.USER_NOT_FOUND);
 현재 Maven 좌표:
 ```
 groupId    : com.hia
-artifactId : common
+artifactId : hia-common
 version    : 0.0.1-SNAPSHOT
 ```
 
-그리고 서비스 적용 예시는:
+그리고 서비스에서 Maven Local을 사용하는 경우:
 
 ```gradle
 repositories {
@@ -145,18 +145,102 @@ dependencies {
 ```
 실제 서비스 프로젝트 생성 후 의존성 적용 및 Spring Bean 등록 여부를 통합 검증할 예정입니다.
 
+## Publish to GitHub Packages
+
+공통모듈은 GitHub Packages의 Maven Registry에도 배포합니다.
+
+Repository:
+
+```text
+hia-auction/hia-common
+```
+### 서비스에서 사용
+서비스의 build.gradle에 GitHub Packages 저장소를 추가합니다.
+
+```gradle
+def githubUsername =
+        System.getenv('GITHUB_ACTOR')
+        ?: findProperty('GitHubPackagesUsername')
+
+def githubToken =
+        System.getenv('GITHUB_TOKEN')
+        ?: findProperty('GitHubPackagesPassword')
+
+repositories {
+    mavenCentral()
+
+    maven {
+        name = 'GitHubPackages'
+        url = uri('https://maven.pkg.github.com/hia-auction/hia-common')
+
+        credentials {
+            username = githubUsername
+            password = githubToken
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.hia:hia-common:0.0.1-SNAPSHOT'
+}
+```
+
+### 로컬인증
+로컬에서는 Gradle 사용자 홈의 gradle.properties에 GitHub Packages 인증 정보를 설정합니다.
+```properties
+GitHubPackagesUsername=YOUR_GITHUB_USERNAME
+GitHubPackagesPassword=YOUR_PERSONAL_ACCESS_TOKEN
+```
+### GitHub Actions 인증
+GitHub Actions에서는 GITHUB_TOKEN을 사용합니다.
+```yaml
+propertiespermissions:
+  contents: read
+  packages: read
+```
+빌드 단계 예시:
+```yaml
+- name: Build and Test
+  run: ./gradlew clean build
+  env:
+    GITHUB_ACTOR: ${{ github.actor }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+---
+
 ## Logging Policy
 예상 가능한 요청/비즈니스 오류는 `WARN`으로 기록합니다.
 예상하지 못한 서버 오류는 `ERROR`로 기록하며 원인 추적을 위해 stack trace를 남깁니다.
 요청 본문 전체나 민감정보는 로그에 직접 기록하지 않습니다.
+
+
 ## Status
 
-현재 공통모듈 자체 구현, 단위 테스트 및 Maven Local 배포까지 완료했습니다.
+현재 다음 작업을 완료했습니다.
 
-향후 실제 서비스 프로젝트에 적용하여 다음 항목을 검증할 예정입니다.
+- 공통 응답 및 예외 처리 구현
+- 주요 Spring MVC 예외 처리
+- 단위 테스트
+- Maven Local 배포
+- GitHub Packages 배포
+- User Service 공통모듈 연동
+- ApiResponse 통합 검증
+- CustomException / GlobalExceptionHandler 통합 검증
+- GitHub Actions 환경에서 패키지 다운로드 및 빌드 검증
+- JPA Auditing용 BaseTime 추가
 
-- 공통모듈 의존성 적용
-- GlobalExceptionHandler Bean 등록
-- 서비스별 ErrorCode 확장
-- 실제 HTTP 요청/응답 검증
-- 의존성 scope 최종 점검
+향후 공통모듈은 실제 서비스 개발 과정에서 필요한 공통 기능을 점진적으로 확장할 예정입니다.
+
+## JPA Auditing
+
+공통모듈은 Entity의 생성/수정 시간을 관리하기 위한 `BaseTime`을 제공합니다.
+
+### 사용 방법
+
+JPA Entity에서 `BaseTime`을 상속합니다.
+
+```java
+@Entity
+public class User extends BaseTime {
+    // ...
+}
